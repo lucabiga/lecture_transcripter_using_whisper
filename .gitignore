@@ -56,4 +56,10 @@ transcripts/
 # Temporary files
 tmp/
 temp/
-.cache/ 
+.cache/
+
+*.mp4
+*.wav
+*_segments.json
+*_part*.txt
+
