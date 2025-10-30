@@ -1,3 +1,7 @@
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![CUDA](https://img.shields.io/badge/CUDA-Supported-green.svg)
+![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
+
 # Whisper Transcription Tool (CUDA-compatible)
 
 This repository provides a Python script for **automatic speech transcription** from video or audio files using OpenAI's [Whisper](https://github.com/openai/whisper) model.  

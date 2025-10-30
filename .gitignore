@@ -1,0 +1,59 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Virtual environments & env files
+.env
+.env.*
+venv/
+ENV/
+env/
+.venv/
+
+# Test / type-check / coverage
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+
+# IDEs / editors / OS files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Large data, models, outputs (Whisper / audio project)
+models/
+*.pt
+data/
+downloads/
+raw_audio/
+recordings/
+outputs/
+transcripts/
+
+# Temporary files
+tmp/
+temp/
+.cache/ 
