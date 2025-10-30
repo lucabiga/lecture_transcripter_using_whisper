@@ -54,13 +54,61 @@ This temporarily allows PowerShell to run local scripts (like activate.ps1) duri
 
 
 ### 3. Install dependencies
+
+#### QUICK INSTALL (Windows - RECOMMENDED)
+
+Simply run the automated installation script:
+
 ```bash
-pip install -r requirements.txt
+install_cuda.bat
 ```
 
-You can also install them manually:
+This will:
+- Create a virtual environment (if not exists)
+- Install PyTorch with CUDA 12.1 support
+- Install Whisper and dependencies
+- Verify CUDA is working
+
+#### 🚀 QUICK INSTALL (Linux/macOS)
+
 ```bash
-pip install openai-whisper torch tqdm
+chmod +x install_cuda.sh
+./install_cuda.sh
+```
+
+#### Manual Installation
+
+**IMPORTANT: Install PyTorch with CUDA support FIRST!**
+
+##### For GPU (CUDA) - RECOMMENDED for speed:
+
+```bash
+# For CUDA 12.x (RTX 30xx, 40xx, A100, etc.)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Then install other dependencies
+pip install openai-whisper tqdm
+```
+
+##### For CPU-only (NOT recommended - 10-20x slower):
+
+```bash
+pip install torch torchvision torchaudio
+pip install openai-whisper tqdm
+```
+
+#### Verify CUDA installation:
+
+After installation, verify that PyTorch can see your GPU:
+
+```bash
+python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A')"
+```
+
+You should see:
+```
+CUDA available: True
+GPU: NVIDIA GeForce RTX XXXX
 ```
 
 ---
@@ -153,15 +201,58 @@ Highlight key concepts and transitions between topics.
 
 ---
 
-## GPU notes
+## Troubleshooting
 
-If CUDA is available, the script will automatically use it.  
-To verify that PyTorch detects your GPU:
-```bash
-python -c "import torch; print(torch.cuda.is_available())"
-```
+### Script says "Using device: CPU" instead of CUDA
 
-If it returns `True`, Whisper will run significantly faster on your GPU.
+This means PyTorch was installed **without CUDA support**. To fix:
+
+1. **Uninstall the CPU-only version**:
+   ```bash
+   pip uninstall torch torchvision torchaudio -y
+   ```
+
+2. **Reinstall with CUDA support**:
+   ```bash
+   # For CUDA 12.x (most modern GPUs)
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   ```
+
+3. **Verify CUDA is now available**:
+   ```bash
+   python -c "import torch; print('CUDA:', torch.cuda.is_available())"
+   ```
+
+### "FP16 is not supported on CPU" warning
+
+This warning appears when using CPU mode. It's harmless but indicates slower performance.  
+**Solution**: Install PyTorch with CUDA support (see above).
+
+### Transcription stops after one sentence
+
+This was a bug in earlier versions caused by `whisper.pad_or_trim()` cutting audio to 30 seconds.  
+**Solution**: Make sure you're using the latest version of `transcripter.py` which uses `model.transcribe()` correctly.
+
+### Out of memory error on GPU
+
+If you get CUDA out of memory errors:
+- Try a smaller model: change `MODEL_NAME = "medium"` to `"small"` or `"tiny"` in the script
+- Close other GPU-intensive applications
+- Check GPU memory usage: `nvidia-smi`
+
+---
+
+## Performance Notes
+
+**GPU (CUDA) vs CPU speed comparison** for a 1-hour lecture:
+
+| Device | Model Size | Approximate Time |
+|--------|-----------|------------------|
+| CPU | medium | ~60-90 minutes |
+| GPU (RTX 4060) | medium | ~5-8 minutes |
+| GPU (RTX 4090) | large | ~4-6 minutes |
+
+**⚠️ Using CUDA is 10-20x faster than CPU!**
 
 ---
 

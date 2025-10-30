@@ -1,3 +1,13 @@
+# IMPORTANT: Install PyTorch with CUDA support FIRST, then install other packages
+# For CUDA 12.x (recommended for NVIDIA RTX 30xx, 40xx series):
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# For CUDA 11.8:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# For CPU-only (NOT recommended, very slow):
+# pip install torch torchvision torchaudio
+
+# After installing PyTorch, install these:
 openai-whisper
-torch
 tqdm

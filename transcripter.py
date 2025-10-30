@@ -4,18 +4,28 @@ from pathlib import Path
 
 # --- Automatic dependency installer ---
 def install_requirements():
-    """Install dependencies from requirements.txt if missing."""
-    req_path = Path(__file__).parent / "requirements.txt"
-    if not req_path.exists():
-        print("requirements.txt not found. Creating default one...")
-        req_path.write_text("openai-whisper\ntorch\ntqdm\n", encoding="utf-8")
-
+    """Install dependencies if missing, with CUDA warning."""
     try:
-        import whisper, torch, tqdm  # noqa
+        import whisper, torch  # noqa
     except ImportError:
-        print("Installing required packages...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(req_path)])
-        print("Dependencies installed successfully.\n")
+        print("\n" + "="*70)
+        print("MISSING DEPENDENCIES DETECTED")
+        print("="*70)
+        print("\nFor BEST PERFORMANCE, install PyTorch with CUDA support:")
+        print("  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121")
+        print("\nThen install Whisper:")
+        print("  pip install openai-whisper tqdm")
+        print("\n" + "="*70)
+        
+        choice = input("\nDo you want to install CPU-only version now? (y/n): ").strip().lower()
+        if choice == 'y':
+            print("\nInstalling CPU-only version (will be 10-20x slower than GPU)...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "openai-whisper", "torch", "tqdm"])
+            print("\nDependencies installed. Re-run the script to start transcription.")
+            sys.exit(0)
+        else:
+            print("\nInstallation cancelled. Please install dependencies manually.")
+            sys.exit(1)
 
 install_requirements()
 
@@ -49,7 +59,7 @@ def split_text(text, chunk_size):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python transcribe_video_cuda.py <video_file> [--json-only]")
+        print("Usage: python transcripter.py <video_file> [--json-only]")
         sys.exit(1)
 
     video_path = Path(sys.argv[1])
@@ -62,74 +72,78 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"\nUsing device: {device.upper()}")
+    
+    if device == "cuda":
+        gpu_name = torch.cuda.get_device_name(0)
+        print(f"GPU: {gpu_name}")
+    else:
+        print("WARNING: CUDA not available. Using CPU (will be slower).")
+        print("To use GPU, install PyTorch with CUDA:")
+        print("   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121")
 
-    print(f"Loading Whisper model '{MODEL_NAME}' ...")
+    print(f"\n🎧 Loading Whisper model '{MODEL_NAME}' ...")
     model = whisper.load_model(MODEL_NAME, device=device)
 
-    print(f"Loading audio from {video_path.name} ...")
-    audio = whisper.load_audio(str(video_path))
-    audio = whisper.pad_or_trim(audio)
+    print(f"\n🕓 Transcribing {video_path.name} ...")
+    print("⏳ Processing... (this may take several minutes)\n")
+    
+    import time
+    start_time = time.time()
+    
+    # Transcribe without verbose output
+    result = model.transcribe(
+        str(video_path), 
+        language=language,
+        verbose=False,  # Disable text output during transcription
+        fp16=(device == "cuda")  # Use FP16 only on CUDA
+    )
+    
+    elapsed_time = time.time() - start_time
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+    print(f"\n✅ Transcription completed in {minutes}m {seconds}s!\n")
 
-    print("Preprocessing audio ...")
-    mel = whisper.log_mel_spectrogram(audio).to(device)
-
-    if language not in ["en", "it"]:
-        print("Detecting language ...")
-        _, probs = model.detect_language(mel)
-        language = max(probs, key=probs.get)
-        print(f"Detected language: {language}")
-
-    print(f"Transcribing {video_path.name} ... please wait.")
-    options = whisper.DecodingOptions(language=language, fp16=(device == "cuda"))
-
-    import math
-    duration_s = len(audio) / whisper.audio.SAMPLE_RATE
-    segment_dur = 30
-    num_segments = math.ceil(duration_s / segment_dur)
-
-    segments = []
-    for i in tqdm(range(num_segments), desc="Transcribing", unit="segment"):
-        start = i * segment_dur
-        end = min((i + 1) * segment_dur, duration_s)
-        seg_audio = audio[int(start * whisper.audio.SAMPLE_RATE):int(end * whisper.audio.SAMPLE_RATE)]
-        seg_mel = whisper.log_mel_spectrogram(seg_audio).to(device)
-        result = whisper.decode(model, seg_mel, options)
-        segments.append({
-            "id": i,
-            "start": start,
-            "end": end,
-            "text": result.text.strip()
-        })
-
-    full_text = "\n".join([s["text"] for s in segments]).strip()
+    full_text = result["text"]
+    segments = result["segments"]
     base_name = video_path.stem
 
     json_path = video_path.parent / f"{base_name}_segments.json"
+    print("💾 Saving results...")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump({
             "language": language,
             "segments": segments,
             "text": full_text
         }, f, indent=2, ensure_ascii=False)
-    print(f"\nJSON segments saved to: {json_path}")
+    print(f"✅ JSON segments saved to: {json_path}")
 
     if json_only:
-        print("JSON-only mode enabled. Skipping text file generation.")
+        print("\n💡 JSON-only mode enabled. Skipping text file generation.")
+        print(f"📊 Total segments: {len(segments)}")
+        print(f"📊 Total characters: {len(full_text):,}")
         return
 
+    # Split and save text files
+    print("\n📝 Creating text files...")
     chunks = split_text(full_text, CHUNK_SIZE)
     output_files = []
-    for i, chunk in enumerate(chunks, start=1):
+    
+    for i, chunk in enumerate(tqdm(chunks, desc="💾 Saving chunks", unit="file"), start=1):
         output_path = video_path.parent / f"{base_name}_part{i}.txt"
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(chunk)
         output_files.append(output_path)
 
-    print("\nTranscription completed successfully!")
-    print(f"Total characters: {len(full_text):,}")
-    print(f"Files created ({len(chunks)} parts of ~{CHUNK_SIZE} chars):")
+    print("\n" + "="*60)
+    print("✅ TRANSCRIPTION COMPLETED SUCCESSFULLY!")
+    print("="*60)
+    print(f"📊 Total characters: {len(full_text):,}")
+    print(f"📊 Total segments: {len(segments)}")
+    print(f"📄 Text files created: {len(chunks)} (parts of ~{CHUNK_SIZE:,} chars)")
     for file in output_files:
-        print(f"  - {file.name}")
+        print(f"   • {file.name}")
+    print(f"📋 JSON file: {json_path.name}")
+    print("="*60)
     print(f"JSON file: {json_path.name}")
 
 if __name__ == "__main__":
