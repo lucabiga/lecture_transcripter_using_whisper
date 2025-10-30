@@ -70,13 +70,13 @@ pip install openai-whisper torch tqdm
 
 ### Basic transcription
 ```bash
-python transcribe_video_cuda.py path/to/video.mp4
+python transcripter.py path/to/video.mp4
 ```
 
 ### JSON-only output
 If you only need structured data (timestamps, language, and text):
 ```bash
-python transcribe_video_cuda.py path/to/video.mp4 --json-only
+python transcripter.py path/to/video.mp4 --json-only
 ```
 
 During execution, you will be asked to select the spoken language:
