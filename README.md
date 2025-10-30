@@ -36,7 +36,7 @@ source venv/bin/activate      # Linux/macOS
 venv\Scripts\activate         # Windows
 ```
 
-## Windows Execution Policy Issue
+#### Windows Execution Policy Issue
 
 If you encounter an execution policy error like:
 
@@ -65,16 +65,6 @@ pip install openai-whisper torch tqdm
 
 ---
 
-## requirements.txt
-
-For convenience, this file should contain:
-```
-openai-whisper
-torch
-tqdm
-```
-
----
 
 ## Usage
 
