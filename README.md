@@ -26,7 +26,7 @@ It supports GPU acceleration (CUDA), multi-language selection, JSON export with 
 ### 1. Clone this repository
 ```bash
 git clone https://github.com/lucabiga/lecture_transcripter_using_whisper.git
-cd whisper-transcriber
+cd lecture_transcripter_using_whisper
 ```
 
 ### 2. Create and activate a Python virtual environment (recommended)
