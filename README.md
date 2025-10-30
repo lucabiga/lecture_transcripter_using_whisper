@@ -237,26 +237,202 @@ This file is extremely useful if you plan to:
 
 ---
 
-## Using the Output with an LLM
+## 📚 Using the Output with an LLM to Generate Lecture Notes
 
-To make the best use of this transcription data, you can combine the generated files with an LLM to produce summaries, structured notes, or formatted Markdown documents.
+This repository includes a **comprehensive prompt template** (`PROMPT_TEMPLATE.md`) specifically designed to convert your transcription files and lecture slides into high-quality, academic-style Markdown notes.
 
-### Recommended approach
+### Why use the prompt template?
 
-1. **Provide both**:
-   - The `*_segments.json` file (so the LLM can reference timestamps).
-   - The original slides or lecture materials (for semantic context).
-2. Ask the LLM to:
-   - Summarize the transcription section by section.
-   - Create a structured Markdown file (headings, bullet points, timestamps).
-   - Extract definitions, examples, or code references.
+- **Structured workflow**: Clear instructions for processing multiple transcript files with slides
+- **Language flexibility**: Support for both English and Italian output (easily expandable)
+- **Subject-agnostic**: Works for any university course (Computer Science, Physics, Math, etc.)
+- **Professional output**: Generates discursive, well-organized notes suitable for study or publication
+- **LaTeX support**: Properly formats mathematical formulas and code snippets
+- **Handles long transcripts**: Workflow for processing multiple `.txt` files in sequence
 
-Example prompt:
+---
+
+### 🚀 Quick Start: Generating Lecture Notes
+
+#### Step 1: Transcribe your lecture
+```bash
+python transcripter.py path/to/lecture_video.mp4
+```
+
+This will generate:
+- `lecture_part1.txt`, `lecture_part2.txt`, etc. (transcript chunks)
+- `lecture_segments.json` (timestamped data)
+
+#### Step 2: Prepare your materials
+
+Gather:
+- ✅ The generated `.txt` transcription files
+- ✅ Your lecture slides (PDF)
+- ✅ The `PROMPT_TEMPLATE.md` file from this repository
+
+#### Step 3: Customize the prompt
+
+Open `PROMPT_TEMPLATE.md` and configure:
+
+1. **Subject/Topic**: Replace `[SUBJECT]` with your course name
+   - Example: "Computer Graphics", "Machine Learning", "Quantum Physics"
+
+2. **Language**: Replace `[LANGUAGE: Italian / English]` with your choice
+   - Use "Italian" or "English" throughout the template
+
+3. **Number of files**: Note how many transcript files were generated
+
+#### Step 4: Use with your preferred LLM
+
+**Recommended LLMs** (choose one):
+- ChatGPT (GPT-4 or GPT-4 Turbo for best results)
+- Claude (Anthropic - excellent for long documents)
+- Gemini (Google - large context window)
+
+**Workflow:**
+
+1. Copy the **customized prompt** from `PROMPT_TEMPLATE.md`
+2. Paste it into your LLM conversation
+3. Upload your **PDF slides**
+4. Paste the **first transcript file** (`lecture_part1.txt`)
+5. Wait for acknowledgment, then paste the next file
+6. Continue until all files are provided
+7. Type **"Done"** when finished
+8. The LLM will generate a complete Markdown document
+
+#### Step 5: Download and use your notes
+
+The LLM will produce a comprehensive `.md` file that you can:
+- Use in Obsidian, Notion, or any Markdown editor
+- Convert to PDF, HTML, or other formats
+- Study directly or share with classmates
+- Further edit and annotate
+
+---
+
+### 📋 Example Usage Session
+
+**You:**
+```
+I will now provide you with materials for a Computer Graphics lecture.
+
+Target language: English
+
+I will upload:
+- Slide deck (PDF)
+- 3 transcript files (.txt)
+
+Please create detailed, discursive lecture notes in Markdown 
+following the structure outlined above.
+
+Starting with the slides and first transcript...
+
+[Upload slides.pdf]
+[Paste lecture_part1.txt content]
+```
+
+**LLM:** *Acknowledges and processes first part*
+
+**You:** 
+```
+[Paste lecture_part2.txt content]
+```
+
+**LLM:** *Acknowledges and processes second part*
+
+**You:**
+```
+[Paste lecture_part3.txt content]
+```
+
+**LLM:** *Acknowledges and processes third part*
+
+**You:**
+```
+Done
+```
+
+**LLM:** *Generates complete Markdown lecture notes*
+
+---
+
+### 💡 Tips for Best Results
+
+**For better transcription quality:**
+- Use the `medium` or `large` Whisper model for academic content
+- Select the correct language during transcription
+- Ensure good audio quality in your source video
+
+**For better LLM-generated notes:**
+- Always provide both slides (PDF) and transcripts
+- Use GPT-4 or Claude for complex technical subjects
+- If output is cut off, ask the LLM to "continue" or "complete the section"
+- Review and manually adjust formulas or code if needed
+
+**Time management:**
+- Transcription: 5-10 minutes per hour of lecture (with GPU)
+- LLM processing: 2-5 minutes per transcript chunk
+- Manual review: 10-15 minutes
+
+**Total time: ~30-45 minutes for a full 2-hour lecture** ⚡
+
+---
+
+### 🎯 What You Get
+
+The final Markdown notes will include:
+
+✅ **Structured headings** organized by topic  
+✅ **Continuous prose** (not bullet points) - reads like a textbook  
+✅ **LaTeX formulas** properly formatted (`$$` for blocks, `$` for inline)  
+✅ **Code snippets** with syntax highlighting  
+✅ **Integrated explanations** from both slides and spoken content  
+✅ **Academic tone** suitable for study or publication  
+✅ **Logical flow** that follows the lecture progression  
+
+**Example output structure:**
+```markdown
+# Lecture 4: Ray Tracing Fundamentals
+
+## Introduction to Ray Tracing
+
+Ray tracing is a rendering technique that simulates the physical 
+behavior of light to generate photorealistic images...
+
+### The Ray-Scene Intersection Problem
+
+Given a ray $\mathbf{r}(t) = \mathbf{o} + t\mathbf{d}$ where 
+$\mathbf{o}$ is the origin and $\mathbf{d}$ is the direction...
+
+## Implementation in OpenGL
+
+```cpp
+vec3 rayDirection = normalize(pixelPos - cameraPos);
+float t = intersectSphere(rayOrigin, rayDirection, sphere);
+```
+
+...
+```
+
+---
+
+### 📁 Alternative: Quick LLM Prompt (Simple Version)
+
+If you don't need the full template workflow, here's a quick prompt:
+
 ```
 Using this lecture transcription (JSON format) and the accompanying slides, 
 generate a Markdown study guide with timestamps, section titles, and short summaries.
 Highlight key concepts and transitions between topics.
+
+Write in [English/Italian], include LaTeX formulas ($$...$$), and code blocks (```).
+Make it suitable for academic study.
 ```
+
+Then provide:
+- The `*_segments.json` file (for timestamps)
+- The original slides
+- Any specific formatting requirements
 
 ---
 
