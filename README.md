@@ -36,6 +36,23 @@ source venv/bin/activate      # Linux/macOS
 venv\Scripts\activate         # Windows
 ```
 
+## Windows Execution Policy Issue
+
+If you encounter an execution policy error like:
+
+```
++ CategoryInfo          : SecurityError: (:) [], PSSecurityException
++ FullyQualifiedErrorId : UnauthorizedAccess
+```
+
+Run the following command **before executing scripts**:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+This temporarily allows PowerShell to run local scripts (like activate.ps1) during your session without permanently changing the system policy.
+
+
 ### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
