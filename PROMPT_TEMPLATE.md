@@ -45,6 +45,18 @@ The notes must:
 - If the transcript references a slide, integrate the corresponding concept instead of quoting the slide literally
 - Maintain logical flow between topics, even when information comes from different transcript files
 - Use bullet points when necessary, but avoid it to summarize the section context
+- **Enhance readability with Markdown features when appropriate:**
+  - Use **tables** to organize comparative data, parameters, or structured information
+  - Use **callout blocks** (Obsidian-style) to highlight important concepts:
+    - `>[!NOTE]` for general notes or clarifications
+    - `>[!IMPORTANT]` for critical concepts or key takeaways
+    - `>[!WARNING]` for common mistakes or pitfalls
+    - `>[!EXAMPLE]` for practical examples or demonstrations
+    - `>[!TIP]` for useful hints or best practices
+  - Use **bold** and *italic* text for emphasis where needed
+  - Use **horizontal rules** (`---`) to separate major sections when appropriate
+
+
 
 ---
 
