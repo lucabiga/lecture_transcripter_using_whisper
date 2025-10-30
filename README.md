@@ -153,28 +153,87 @@ Contain the raw transcription split into ~30,000-character parts.
 This makes it easier to feed the text into an LLM (such as ChatGPT, Claude, or Gemini) without hitting token limits.
 
 ### `.json` file
-Contains all transcribed segments with metadata:
+Contains all transcribed segments with metadata and timestamps:
 
 ```json
 {
-  "language": "en",
+  "language": "it",
   "segments": [
     {
       "id": 0,
+      "seek": 0,
       "start": 0.0,
-      "end": 8.3,
-      "text": "Hello everyone, welcome to today's lecture."
-    },
-    ...
+      "end": 9.0,
+      "text": "Transcribed text for this segment.",
+      "tokens": [50364, 28473, ...],
+      "temperature": 0.0,
+      "avg_logprob": -0.44,
+      "compression_ratio": 1.25,
+      "no_speech_prob": 0.0024
+    }
   ],
   "text": "Full concatenated transcription here."
 }
 ```
 
+**JSON Structure Explanation:**
+
+**Top-level fields:**
+- `language`: Detected or selected language code (e.g., "en", "it")
+- `segments`: Array of time-stamped transcription segments
+- `text`: Complete transcription as a single string
+
+**Segment fields:**
+- `id`: Sequential segment number (0, 1, 2, ...)
+- `start`: Start time in seconds (e.g., 0.0)
+- `end`: End time in seconds (e.g., 9.0)
+- `text`: Transcribed text for this time segment
+- `seek`: Internal audio position (used by Whisper for processing)
+- `tokens`: Numerical token IDs used by the AI model
+- `temperature`: Sampling temperature (0.0 = deterministic, higher = more random)
+- `avg_logprob`: Average log probability (closer to 0 = higher confidence)
+- `compression_ratio`: Text compression ratio (helps detect repetitions)
+- `no_speech_prob`: Probability of silence/no speech (0.0-1.0, lower = speech detected)
+
+**Practical uses:**
+
+**1. Creating subtitles with precise timing:**
+```python
+for segment in data['segments']:
+    print(f"[{segment['start']:.2f}s - {segment['end']:.2f}s] {segment['text']}")
+```
+
+**2. Quality assessment:**
+- Check `avg_logprob`: values below -1.0 may indicate uncertain transcriptions
+- Check `no_speech_prob`: values above 0.5 may indicate silence or background noise
+- Review segments with low confidence for manual correction
+
+**3. Timestamped notes and documentation:**
+```markdown
+## Lecture Notes
+
+[00:00 - 00:09] Introduction and overview
+[00:09 - 00:25] First main concept explained
+...
+```
+
+**4. Integration with LLMs:**
+- Feed the JSON to ChatGPT, Claude, or other LLMs
+- Request summaries with preserved timestamps
+- Generate structured notes, Q&A sets, or study guides
+
+**5. Data processing and analysis:**
+- Extract specific time ranges
+- Search for keywords with timestamps
+- Analyze speech patterns and pacing
+- Create searchable transcription databases
+
 This file is extremely useful if you plan to:
-- Synchronize notes or subtitles with timestamps.
-- Generate summaries, structured notes, or question-answer sets.
-- Integrate the output into your own data processing or LLM pipelines.
+- Synchronize notes or subtitles with timestamps
+- Generate summaries, structured notes, or question-answer sets
+- Verify transcription quality and identify uncertain segments
+- Integrate the output into your own data processing or LLM pipelines
+- Create time-coded references for study materials
 
 ---
 
