@@ -1,6 +1,5 @@
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![CUDA](https://img.shields.io/badge/CUDA-Supported-green.svg)
-![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
 
 # Whisper Transcription Tool (CUDA-compatible)
 
@@ -26,7 +25,7 @@ It supports GPU acceleration (CUDA), multi-language selection, JSON export with 
 
 ### 1. Clone this repository
 ```bash
-git clone https://github.com/<your-username>/whisper-transcriber.git
+git clone https://github.com/lucabiga/whisper-transcriber.git
 cd whisper-transcriber
 ```
 
@@ -157,7 +156,6 @@ python -c "import torch; print(torch.cuda.is_available())"
 
 If it returns `True`, Whisper will run significantly faster on your GPU.
 
----
 ---
 
 ## License
