@@ -52,6 +52,7 @@ raw_audio/
 recordings/
 outputs/
 transcripts/
+uploads/
 
 # Temporary files
 tmp/

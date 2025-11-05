@@ -116,6 +116,8 @@ GPU: NVIDIA GeForce RTX XXXX
 
 ## Usage
 
+### 🖥️ Local Usage (Command Line)
+
 ### Basic transcription
 ```bash
 python transcripter.py path/to/video.mp4
@@ -137,6 +139,217 @@ Select language for transcription:
 The script will automatically detect and use your GPU if available.
 
 ---
+
+### 🌐 Remote Usage (API Server)
+
+For remote transcription via web browser or API calls, you can run the included FastAPI server.
+
+#### Quick Start
+
+**Windows:**
+```bash
+run_server.bat
+```
+
+**Linux/macOS:**
+```bash
+chmod +x run_server.sh
+./run_server.sh
+```
+
+#### Manual Start
+```bash
+# Activate virtual environment first
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/macOS
+
+# Install API dependencies (if not already installed)
+pip install fastapi uvicorn[standard] python-multipart aiofiles
+
+# Start server
+python api_server.py
+```
+
+#### Access the Service
+
+Once the server is running:
+
+- **Web Interface**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs (Swagger UI)
+- **Alternative API Docs**: http://localhost:8000/redoc
+
+#### Web Interface Features
+
+The web interface provides:
+
+✅ **Drag-and-drop file upload** (or click to browse)  
+✅ **Real-time progress tracking** with visual progress bar  
+✅ **Language selection** (Auto-detect, English, Italian)  
+✅ **Output options** (JSON only or full text files)  
+✅ **Automatic result download** after completion  
+✅ **Mobile-responsive design**  
+
+**Supported formats**: MP4, MP3, WAV, M4A, AVI, MOV, FLAC, OGG, WEBM (up to 2GB)
+
+#### API Endpoints
+
+##### 1. Upload File for Transcription
+```bash
+POST /api/upload
+```
+
+**Parameters** (multipart/form-data):
+- `file`: Audio/video file
+- `language`: "auto", "english", or "italian" (default: "auto")
+- `json_only`: boolean (default: false)
+
+**Example using curl:**
+```bash
+curl -X POST "http://localhost:8000/api/upload" \
+  -F "file=@lecture.mp4" \
+  -F "language=english" \
+  -F "json_only=false"
+```
+
+**Response:**
+```json
+{
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "File uploaded successfully. Transcription started.",
+  "status_url": "/api/status/550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+##### 2. Check Transcription Status
+```bash
+GET /api/status/{job_id}
+```
+
+**Example:**
+```bash
+curl http://localhost:8000/api/status/550e8400-e29b-41d4-a716-446655440000
+```
+
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "filename": "lecture.mp4",
+  "status": "processing",
+  "progress": 45,
+  "message": "Transcribing audio...",
+  "language": "english",
+  "language_detected": "en",
+  "files": []
+}
+```
+
+**Status values**: `queued`, `processing`, `completed`, `failed`
+
+##### 3. Download Result Files
+```bash
+GET /api/download/{job_id}/{filename}
+```
+
+**Example:**
+```bash
+curl -O http://localhost:8000/api/download/550e8400-e29b-41d4-a716-446655440000/lecture_part1.txt
+```
+
+##### 4. List All Jobs
+```bash
+GET /api/jobs
+```
+
+##### 5. Delete Job
+```bash
+DELETE /api/jobs/{job_id}
+```
+
+##### 6. Health Check
+```bash
+GET /api/health
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "device": "cuda",
+  "cuda_available": true,
+  "gpu_name": "NVIDIA GeForce RTX 4060"
+}
+```
+
+#### Python Client Example
+
+```python
+import requests
+import time
+
+# Upload file
+files = {'file': open('lecture.mp4', 'rb')}
+data = {'language': 'english', 'json_only': 'false'}
+response = requests.post('http://localhost:8000/api/upload', files=files, data=data)
+job_id = response.json()['job_id']
+
+# Poll for status
+while True:
+    status = requests.get(f'http://localhost:8000/api/status/{job_id}').json()
+    print(f"Progress: {status['progress']}% - {status['message']}")
+    
+    if status['status'] == 'completed':
+        print("Transcription complete!")
+        for filepath in status['files']:
+            filename = filepath.split('/')[-1]
+            # Download file
+            file_response = requests.get(f'http://localhost:8000/api/download/{job_id}/{filename}')
+            with open(filename, 'wb') as f:
+                f.write(file_response.content)
+        break
+    elif status['status'] == 'failed':
+        print(f"Error: {status.get('error')}")
+        break
+    
+    time.sleep(2)
+```
+
+#### Configuration
+
+Edit `config.py` to customize:
+
+- Server host/port
+- Maximum file size
+- Whisper model size (tiny/base/small/medium/large)
+- Auto-cleanup settings
+- CORS origins
+
+#### Remote Access
+
+To access the server from other devices on your network:
+
+1. Find your local IP address:
+   ```bash
+   # Windows
+   ipconfig
+   
+   # Linux/macOS
+   ifconfig
+   ```
+
+2. Access from other devices using your IP:
+   ```
+   http://192.168.1.XXX:8000
+   ```
+
+**⚠️ Security Warning**: The default configuration allows all CORS origins. For production use:
+- Use HTTPS (SSL/TLS)
+- Restrict CORS origins in `config.py`
+- Add authentication
+- Use a reverse proxy (nginx, Apache)
+- Consider rate limiting
+
+
 
 ## Output structure
 

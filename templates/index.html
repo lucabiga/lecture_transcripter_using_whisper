@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎙️ Whisper Transcription Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-zone.uploading {
+            border-color: #fbbf24;
+            background: #fffbeb;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-zone h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .upload-zone p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .option-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .option-group select {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .status-message {
+            text-align: center;
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .results h3 {
+            color: #10b981;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .file-list {
+            list-style: none;
+        }
+
+        .file-item {
+            background: #f9fafb;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item:hover {
+            background: #f3f4f6;
+        }
+
+        .download-btn {
+            background: #10b981;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .info-section {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #0ea5e9;
+        }
+
+        .info-section h4 {
+            color: #0369a1;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            margin-left: 20px;
+            color: #666;
+        }
+
+        .info-section li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Whisper Transcription Service</h1>
+            <p>Upload your audio or video files for automatic transcription</p>
+        </div>
+
+        <div class="card">
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">📁</div>
+                <h3>Drop your file here</h3>
+                <p>or click to browse</p>
+                <p style="font-size: 0.9em; color: #999;">
+                    Supported: MP4, MP3, WAV, M4A, AVI, MOV, FLAC, OGG, WEBM (Max 2GB)
+                </p>
+                <input type="file" id="fileInput" class="file-input" accept=".mp4,.mp3,.wav,.m4a,.avi,.mov,.flac,.ogg,.webm">
+            </div>
+
+            <div class="options">
+                <div class="option-group">
+                    <label for="language">Language</label>
+                    <select id="language">
+                        <option value="auto">Auto-detect</option>
+                        <option value="english">English</option>
+                        <option value="italian">Italian</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>Output Options</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="jsonOnly">
+                        <label for="jsonOnly" style="margin: 0; font-weight: normal;">JSON only (no text files)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+                <div class="status-message" id="statusMessage">Uploading...</div>
+            </div>
+
+            <div class="results" id="results">
+                <h3>✅ Transcription Complete!</h3>
+                <p style="margin-bottom: 15px; color: #666;">
+                    <strong>Detected language:</strong> <span id="detectedLanguage">-</span>
+                </p>
+                <ul class="file-list" id="fileList"></ul>
+            </div>
+
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="card info-section">
+            <h4>ℹ️ How it works</h4>
+            <ul>
+                <li>Upload your audio or video file (up to 2GB)</li>
+                <li>Select the language or use auto-detection</li>
+                <li>The server will transcribe using OpenAI Whisper AI</li>
+                <li>Download the results as text files and/or JSON with timestamps</li>
+                <li>Processing time depends on file length and server hardware (GPU recommended)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const language = document.getElementById('language');
+        const jsonOnly = document.getElementById('jsonOnly');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+        const results = document.getElementById('results');
+        const fileList = document.getElementById('fileList');
+        const errorDiv = document.getElementById('error');
+        const detectedLanguage = document.getElementById('detectedLanguage');
+
+        let currentJobId = null;
+        let pollInterval = null;
+
+        // Click to browse
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            // Reset UI
+            errorDiv.classList.remove('active');
+            results.classList.remove('active');
+            progressContainer.classList.add('active');
+            uploadZone.classList.add('uploading');
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('language', language.value);
+            formData.append('json_only', jsonOnly.checked);
+
+            try {
+                // Upload file
+                statusMessage.textContent = 'Uploading file...';
+                progressFill.style.width = '0%';
+                progressFill.textContent = '0%';
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Upload failed');
+                }
+
+                const data = await response.json();
+                currentJobId = data.job_id;
+
+                // Start polling for status
+                pollStatus();
+
+            } catch (error) {
+                showError(error.message);
+                resetUI();
+            }
+        }
+
+        async function pollStatus() {
+            if (!currentJobId) return;
+
+            try {
+                const response = await fetch(`/api/status/${currentJobId}`);
+                const data = await response.json();
+
+                // Update progress
+                progressFill.style.width = data.progress + '%';
+                progressFill.textContent = data.progress + '%';
+                statusMessage.textContent = data.message || 'Processing...';
+
+                if (data.status === 'completed') {
+                    // Show results
+                    showResults(data);
+                    resetUI();
+                } else if (data.status === 'failed') {
+                    throw new Error(data.error || 'Transcription failed');
+                } else {
+                    // Continue polling
+                    setTimeout(pollStatus, 1000);
+                }
+
+            } catch (error) {
+                showError(error.message);
+                resetUI();
+            }
+        }
+
+        function showResults(data) {
+            results.classList.add('active');
+            progressContainer.classList.remove('active');
+            
+            detectedLanguage.textContent = data.language_detected || 'Unknown';
+            
+            fileList.innerHTML = '';
+            data.files.forEach(filepath => {
+                const filename = filepath.split(/[/\\]/).pop();
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.innerHTML = `
+                    <span>📄 ${filename}</span>
+                    <a href="/api/download/${data.id}/${filename}" class="download-btn" download>Download</a>
+                `;
+                fileList.appendChild(li);
+            });
+        }
+
+        function showError(message) {
+            errorDiv.textContent = '❌ Error: ' + message;
+            errorDiv.classList.add('active');
+        }
+
+        function resetUI() {
+            uploadZone.classList.remove('uploading');
+            progressContainer.classList.remove('active');
+            currentJobId = null;
+        }
+
+        // Check server health on load
+        fetch('/api/health')
+            .then(r => r.json())
+            .then(data => {
+                console.log('Server status:', data);
+                if (data.cuda_available) {
+                    console.log('🚀 GPU acceleration available:', data.gpu_name);
+                } else {
+                    console.log('⚠️ Running on CPU (slower)');
+                }
+            });
+    </script>
+</body>
+</html>
